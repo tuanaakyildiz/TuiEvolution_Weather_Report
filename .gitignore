@@ -7,3 +7,6 @@ __pycache__/
 backend/venv/
 __pycache__/
 *.pyc
+backend/env
+frontend/env
+.env/
