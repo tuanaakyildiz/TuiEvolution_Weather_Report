@@ -7,7 +7,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import MinMaxScaler
-from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from contextlib import asynccontextmanager
 
@@ -22,29 +21,39 @@ LABELS_PATH = "labels.pkl"
 
 # --- YARDIMCI FONKSİYONLAR ---
 
-def get_historical_data():
-    """OpenWeather API'den son 5 günlük veriyi çeker."""
+def get_training_data():
+    """
+    OpenWeather API'den 5 günlük/3 saatlik tahmin verisini çeker.
+    (Ücretsiz API ile uyumlu versiyon)
+    """
     all_data = []
-    lat, lon = 41.0082, 28.9784 # Örn: İstanbul
+    lat, lon = 41.0082, 28.9784 # İstanbul Koordinatları
     
-    for i in range(1, 6):
-        dt = int((datetime.now() - timedelta(days=i)).timestamp())
-        url = f"https://api.openweathermap.org/data/2.5/onecall/timemachine?lat={lat}&lon={lon}&dt={dt}&appid={API_KEY}&units=metric"
+    # ÜCRETSİZ ENDPOINT: 'forecast' kullanıyoruz
+    url = f"https://api.openweathermap.org/data/2.5/forecast?lat={lat}&lon={lon}&appid={API_KEY}&units=metric"
+    
+    try:
+        response = requests.get(url)
+        # Hata varsa (401, 404 vs) fırlat
+        response.raise_for_status()
         
-        try:
-            res = requests.get(url).json()
-            if 'hourly' in res:
-                for hour in res['hourly']:
-                    all_data.append({
-                        "temp": hour['temp'],
-                        "humidity": hour['humidity'],
-                        "wind": hour['wind_speed'],
-                        "clouds": hour['clouds'],
-                        "pressure": hour['pressure'],
-                        "weather_main": hour['weather'][0]['main']
-                    })
-        except Exception as e:
-            print(f"Veri çekme hatası ({i}. gün): {e}")
+        res = response.json()
+        
+        if 'list' in res:
+            for item in res['list']:
+                all_data.append({
+                    "temp": item['main']['temp'],
+                    "humidity": item['main']['humidity'],
+                    "wind": item['wind']['speed'],
+                    "clouds": item['clouds']['all'],
+                    "pressure": item['main']['pressure'],
+                    "weather_main": item['weather'][0]['main']
+                })
+        else:
+            print("API yanıtı beklenen formatta değil:", res)
+
+    except Exception as e:
+        print(f"Veri çekme hatası: {e}")
             
     return pd.DataFrame(all_data)
 
@@ -54,11 +63,12 @@ def train_model():
         print("HATA: API_KEY .env dosyasında bulunamadı!")
         return
 
-    print(">>> Veriler çekiliyor...")
-    df = get_historical_data()
+    print(">>> Veriler çekiliyor (Forecast API)...")
+    df = get_training_data()
     
     if df.empty:
         print("HATA: Veri seti boş. Model eğitilemedi.")
+        print("OLASI SEBEP: API Key geçersiz veya henüz aktifleşmedi.")
         return
 
     # Etiketleri Hazırla
@@ -96,10 +106,10 @@ async def lifespan(app: FastAPI):
 # FastAPI Uygulaması
 app = FastAPI(lifespan=lifespan)
 
-# CORS Ayarları
+# CORS Ayarları (Frontend'den gelen isteklere izin ver)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"], # Güvenlik için production'da spesifik domain yazılır
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -110,6 +120,9 @@ app.add_middleware(
 async def predict(data: dict):
     try:
         # Modelleri yükle
+        if not os.path.exists(MODEL_PATH):
+             return {"error": "Model henüz eğitilmedi, lütfen bekleyin veya logları kontrol edin."}
+
         model = joblib.load(MODEL_PATH)
         scaler = joblib.load(SCALER_PATH)
         labels = joblib.load(LABELS_PATH)
