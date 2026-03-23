@@ -88,6 +88,8 @@ function App() {
   const getBackground = () => {
     if (!weatherData) return isDarkMode ? "linear-gradient(to bottom right, #040d1f, #0b1a38)" : "linear-gradient(to bottom right, #eff6ff, #dbeafe)";
     const condition = weatherData.weatherMain.toLowerCase();
+    if (condition.includes("thunderstorm")) return "url('https://images.unsplash.com/photo-1605723517503-3cadb5818a0c?q=80&w=1920&auto=format&fit=crop')";
+    if (condition.includes("rain") || condition.includes("drizzle")) return "url('https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?q=80&w=1920&auto=format&fit=crop')";
     if (condition.includes("rain")) return "url('https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?q=80&w=1920&auto=format&fit=crop')";
     if (condition.includes("clear")) return "url('https://images.unsplash.com/photo-1601297183305-6df142704ea2?q=80&w=1920&auto=format&fit=crop')";
     if (condition.includes("snow")) return "url('https://images.unsplash.com/photo-1542601098-8fc114e148e2?q=80&w=1920&auto=format&fit=crop')";
