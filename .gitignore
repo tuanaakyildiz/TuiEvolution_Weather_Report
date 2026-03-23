@@ -1,0 +1,14 @@
+# Python sanal ortamı
+venv/
+.venv/
+env/
+__pycache__/
+*.pyc
+backend/venv/
+__pycache__/
+*.pyc
+backend/env
+frontend/env
+.env/
+backend/env
+front/env

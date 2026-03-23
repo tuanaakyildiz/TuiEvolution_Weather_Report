@@ -1,0 +1,21 @@
+.app-container {
+  height: 100vh;
+  transition: all 0.5s ease;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Dinamik Arka Planlar */
+.rainy-bg { background: url('https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJueGZueGZueGZueGZueGZueGZueGZueGZueGZueGZueGZueGZueCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l0HlMGW6TfD5U0N4A/giphy.gif') no-repeat center center fixed; background-size: cover; }
+.sunny-bg { background: url('https://media.giphy.com/media/0fvaypxpRSK6A/giphy.gif') no-repeat center center fixed; background-size: cover; }
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  padding: 2rem;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  text-align: center;
+  color: white;
+}
